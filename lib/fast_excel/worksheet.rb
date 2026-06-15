@@ -21,6 +21,12 @@ module FastExcel
       end
     end
 
+    def write_rows(row_number, rows, formats = nil)
+      rows.each_with_index do |values, index|
+        write_row(row_number + index, values, formats)
+      end
+    end
+
     def auto_width?
       defined?(@auto_width) && @auto_width
     end
@@ -75,6 +81,10 @@ module FastExcel
     def append_row(values, formats = nil)
       @last_row_number += 1
       write_row(last_row_number, values, formats)
+    end
+
+    def append_rows(rows, formats = nil)
+      write_rows(@last_row_number + 1, rows, formats)
     end
 
     def <<(values)
