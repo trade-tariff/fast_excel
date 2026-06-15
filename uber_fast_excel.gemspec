@@ -5,7 +5,7 @@ Gem::Specification.new do |s|
   s.email       = ["will@willfish.org"]
   s.homepage    = "https://github.com/willfish/fast_excel"
   s.summary     = "Ultra Fast Excel Writer for Ruby"
-  s.description = "A maintained fork of fast_excel: Ruby FFI bindings for libxlsxwriter with convenience APIs for generating XLSX workbooks."
+  s.description = "Maintained Ruby FFI bindings for libxlsxwriter with convenience APIs for generating XLSX workbooks."
   s.license     = "MIT"
   s.required_ruby_version = ">= 2.7"
 

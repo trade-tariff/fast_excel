@@ -18,7 +18,7 @@ class GemspecTest < Minitest::Test
     assert_includes @spec.files, "lib/fast_excel.rb"
     assert_includes @spec.files, "lib/uber_fast_excel.rb"
     assert_includes @spec.files, "lib/fast_excel/binding.rb"
-    refute_includes @spec.files, "fast_excel-0.5.0.gem"
+    assert_empty @spec.files.grep(/\.gem\z/)
   end
 
   def test_default_require_path_loads_fast_excel_api

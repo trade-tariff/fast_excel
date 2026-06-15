@@ -1,6 +1,6 @@
 # Uber Fast Excel
 
-`uber_fast_excel` is a maintained fork of `fast_excel`, a Ruby wrapper around
+`uber_fast_excel` is a maintained Ruby wrapper around
 [libxlsxwriter](https://github.com/jmcnamara/libxlsxwriter) for generating XLSX
 workbooks quickly through FFI.
 

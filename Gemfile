@@ -4,6 +4,7 @@ gemspec
 
 gem 'rake'
 
+gem 'benchmark'
 gem 'roo'
 gem 'csv'
 gem 'bigdecimal'
