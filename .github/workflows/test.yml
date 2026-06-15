@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6.0.3
         with:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
@@ -31,7 +31,7 @@ jobs:
 
           echo "range=$RANGE" >> "$GITHUB_OUTPUT"
       - name: Conventional commit check
-        uses: cocogitto/cocogitto-action@v4
+        uses: cocogitto/cocogitto-action@v4.1.0
         with:
           command: check
           args: ${{ steps.commit-range.outputs.range }} --ignore-merge-commits
@@ -48,10 +48,10 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6.0.3
         with:
           fetch-depth: 0
-      - uses: ruby/setup-ruby@v1
+      - uses: ruby/setup-ruby@v1.313.0
         with:
           ruby-version: ${{ matrix.ruby }}
 
@@ -66,17 +66,17 @@ jobs:
 
       - name: Coverage Report by octocov
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.ruby == '3.4' }}
-        uses: k1LoW/octocov-action@v1
+        uses: k1LoW/octocov-action@v1.5.1
 
   performance:
     needs: test
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6.0.3
         with:
           fetch-depth: 0
-      - uses: ruby/setup-ruby@v1
+      - uses: ruby/setup-ruby@v1.313.0
         with:
           ruby-version: "3.4"
 
