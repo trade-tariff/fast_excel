@@ -4,6 +4,7 @@ unless ENV["COVERAGE"] == "false"
   SimpleCov.start do
     track_files "lib/**/*.rb"
 
+    add_filter "benchmarks"
     add_filter "test"
     add_filter "lib/fast_excel/binding"
 
