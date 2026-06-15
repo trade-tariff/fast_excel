@@ -1,3 +1,9 @@
+#### Changelog generation
+
+Future release notes for `uber_fast_excel` are generated from conventional
+commits with Cocogitto. Historical `fast_excel` entries are preserved below for
+upgrade context.
+
 #### Version 0.5.0 - 02 jan 2024
 
 * Support ruby 3.3

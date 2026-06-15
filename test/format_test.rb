@@ -91,6 +91,16 @@ describe "FastExcel::FormatExt colors" do
     assert_equal(0xFF0000, @format.font_color)
   end
 
+  it "should set font color as libxlsxwriter color enum name" do
+    @format.font_color = 'color_red'
+    assert_equal(0xFF0000, @format.font_color)
+  end
+
+  it "should set font color as short libxlsxwriter color enum name" do
+    @format.font_color = 'blue'
+    assert_equal(0x0000FF, @format.font_color)
+  end
+
   it "should set font css color" do
     @format.font_color = 'alice_blue'
     assert_equal(0xF0F8FF, @format.font_color)
@@ -180,4 +190,32 @@ describe "FastExcel::FormatExt border" do
     assert_equal(@format.font_name, "XXX")
   end
 
+  it "should raise when font size is negative" do
+    error = assert_raises(ArgumentError) do
+      @format.font_size = -1
+    end
+
+    assert_equal("font size should be >= 0 (use 0 for user default font size)", error.message)
+  end
+
+end
+
+describe "FastExcel::AttributeHelper" do
+  it "should expose fields as a hash" do
+    workbook = FastExcel.open(constant_memory: true)
+    format = workbook.add_format(font_size: 14)
+
+    assert_equal(14, format.fields_hash[:font_size])
+  end
+
+  it "should pretty print fields" do
+    workbook = FastExcel.open(constant_memory: true)
+    format = workbook.add_format(font_size: 14)
+
+    output = capture_io do
+      PP.pp(format)
+    end.first
+
+    assert_includes(output, ":font_size=>14")
+  end
 end

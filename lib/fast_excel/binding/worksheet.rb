@@ -1,4 +1,67 @@
 module Libxlsxwriter
+  class TableColumn < FFI::Struct
+    layout :header, :pointer,
+           :formula, :pointer,
+           :total_string, :pointer,
+           :total_function, :uchar,
+           :header_format, :pointer,
+           :format, :pointer,
+           :total_value, :double
+  end
+
+  class TableOptions < FFI::Struct
+    STYLE_TYPES = {
+      default: 0,
+      light: 1,
+      medium: 2,
+      dark: 3
+    }.freeze
+
+    layout :name, :pointer,
+           :no_header_row, :uchar,
+           :no_autofilter, :uchar,
+           :no_banded_rows, :uchar,
+           :banded_columns, :uchar,
+           :first_column, :uchar,
+           :last_column, :uchar,
+           :style_type, :uchar,
+           :style_type_number, :uchar,
+           :total_row, :uchar,
+           :columns, :pointer
+
+    def self.build(options, columns_pointer = FFI::Pointer::NULL)
+      new.tap do |table_options|
+        if options[:name]
+          table_options.instance_variable_set(:@name, FFI::MemoryPointer.from_string(options[:name].to_s))
+          table_options[:name] = table_options.instance_variable_get(:@name)
+        end
+        table_options[:no_header_row] = boolean(options[:no_header_row])
+        table_options[:no_autofilter] = boolean(options[:no_autofilter])
+        table_options[:no_banded_rows] = boolean(options[:no_banded_rows])
+        table_options[:banded_columns] = boolean(options[:banded_columns])
+        table_options[:first_column] = boolean(options[:first_column])
+        table_options[:last_column] = boolean(options[:last_column])
+        table_options[:total_row] = boolean(options[:total_row])
+
+        style_type, style_number = style(options[:style])
+        table_options[:style_type] = style_type
+        table_options[:style_type_number] = style_number
+        table_options[:columns] = columns_pointer
+      end
+    end
+
+    def self.boolean(value)
+      value ? 1 : 0
+    end
+
+    def self.style(value)
+      match = value.to_s.match(/\ATableStyle(Light|Medium|Dark)(\d+)\z/)
+      return [STYLE_TYPES.fetch(:default), 0] unless match
+
+      [STYLE_TYPES.fetch(match[1].downcase.to_sym), match[2].to_i]
+    end
+  end
+
   # = Fields:
   # :stqe_next ::
   #   (FFI::Pointer(*Worksheet)) 
@@ -210,6 +273,10 @@ module Libxlsxwriter
       Libxlsxwriter.worksheet_write_string(self, row, col, string, format)
     end
 
+    def write_rich_string(row, col, rich_string, format)
+      Libxlsxwriter.worksheet_write_rich_string(self, row, col, rich_string, format)
+    end
+
     def write_comment(row, col, string)
       Libxlsxwriter.worksheet_write_comment(self, row, col, string)
     end
@@ -390,6 +457,29 @@ module Libxlsxwriter
     # @return [Symbol from _enum_error_] 
     def autofilter(first_row, first_col, last_row, last_col)
       Libxlsxwriter.worksheet_autofilter(self, first_row, first_col, last_row, last_col)
+    end
+
+    def add_table(first_row, first_col, last_row, last_col, options = {})
+      strings = []
+      columns = Array(options[:columns]).map do |header|
+        TableColumn.new.tap do |column|
+          strings << FFI::MemoryPointer.from_string(header.to_s)
+          column[:header] = strings.last
+          column[:formula] = FFI::Pointer::NULL
+          column[:total_string] = FFI::Pointer::NULL
+          column[:header_format] = FFI::Pointer::NULL
+          column[:format] = FFI::Pointer::NULL
+        end
+      end
+      columns_pointer = FFI::Pointer::NULL
+
+      unless columns.empty?
+        columns_pointer = FFI::MemoryPointer.new(:pointer, columns.length + 1)
+        columns_pointer.write_array_of_pointer(columns.map(&:to_ptr) + [FFI::Pointer::NULL])
+      end
+
+      table_options = TableOptions.build(options, columns_pointer)
+      Libxlsxwriter.worksheet_add_table(self, first_row, first_col, last_row, last_col, table_options.to_ptr)
     end
   
     # @return [nil] 
@@ -1010,6 +1100,11 @@ module Libxlsxwriter
            :tree_pointers, CellTreePointers.by_value
   end
 
+  class RichStringTuple < FFI::Struct
+    layout :format, :pointer,
+           :string, :pointer
+  end
+
   # @method worksheet_write_number(worksheet, row, col, number, format)
   # @param [Worksheet] worksheet 
   # @param [Integer] row 
@@ -1029,6 +1124,8 @@ module Libxlsxwriter
   # @return [Symbol from _enum_error_] 
   # @scope class
   attach_function :worksheet_write_string, :worksheet_write_string, [Worksheet, :uint32, :ushort, :string, Format], :error
+
+  attach_function :worksheet_write_rich_string, :worksheet_write_rich_string, [Worksheet, :uint32, :ushort, :pointer, Format], :error
 
   attach_function :worksheet_write_comment, :worksheet_write_comment, [Worksheet, :uint32, :ushort, :string], :error
 

@@ -36,4 +36,20 @@ describe "FastExcel text_width" do
 
     assert_equal(sheet.calculated_column_widths, {0 => FastExcel::DEF_COL_WIDTH, 1 => 3.52, 2 => 5.28, 3 => 14.96, 4 => 44.88})
   end
+
+  it "should use explicit and column formats when calculating widths" do
+    workbook = FastExcel.open(constant_memory: false)
+    sheet = workbook.add_worksheet
+    sheet.auto_width = true
+
+    small = workbook.add_format(font_size: 10)
+    large = workbook.add_format(font_size: 20)
+    sheet.set_column(1, 1, nil, large)
+
+    sheet.write_value(0, 0, FastExcel::URL.new("https://example.test"), small)
+    sheet.write_value(0, 1, "large")
+
+    assert_equal(16.0, sheet.calculated_column_widths[0])
+    assert_equal(8.0, sheet.calculated_column_widths[1])
+  end
 end

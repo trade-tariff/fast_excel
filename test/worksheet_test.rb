@@ -1,4 +1,5 @@
 require_relative 'test_helper'
+require "zip"
 
 describe "FastExcel::WorksheetExt append_row" do
 
@@ -23,6 +24,15 @@ describe "FastExcel::WorksheetExt append_row" do
 
     assert_equal(1, @worksheet.last_row_number)
     assert_equal([["aaa", "bbb", "ccc"], ["ddd", "eee", "fff"]], get_arrays(@workbook))
+  end
+
+  it "should use per-cell formats when writing rows" do
+    bold = @workbook.add_format(bold: true)
+    italic = @workbook.add_format(italic: true)
+
+    @worksheet.write_row(0, ["aaa", "bbb"], [bold, italic])
+
+    assert_equal([["aaa", "bbb"]], get_arrays(@workbook))
   end
 
   it "should write_row then append and update last_row_number" do
@@ -82,6 +92,103 @@ describe "FastExcel::WorksheetExt append_row" do
     @worksheet.append_row([BigDecimal("0.1234")])
 
     assert_equal([[0.1234]], get_arrays(@workbook))
+  end
+
+  it "should write formulas urls and booleans" do
+    @worksheet.append_row([
+      true,
+      false,
+      FastExcel::Formula.new("SUM(1,2)"),
+      FastExcel::URL.new("https://github.com/willfish/fast_excel")
+    ])
+
+    assert_equal([[true, false, 0, "https://github.com/willfish/fast_excel"]], get_arrays(@workbook))
+  end
+
+  it "should append rows with shovel" do
+    @worksheet << ["aaa", "bbb"]
+
+    assert_equal(0, @worksheet.last_row_number)
+    assert_equal([["aaa", "bbb"]], get_arrays(@workbook))
+  end
+
+  it "should write rich strings" do
+    bold = @workbook.add_format(bold: true)
+    rich_string = FastExcel::RichString.new([
+      { text: "plain " },
+      { text: "bold", format: bold }
+    ])
+
+    @worksheet.write_value(0, 0, rich_string)
+
+    assert_equal(0, @worksheet.last_row_number)
+    assert_equal([["<html>plain <b>bold</b></html>"]], get_arrays(@workbook))
+  end
+
+  it "should add styled tables" do
+    @worksheet.append_row(["Code", "Status"])
+    @worksheet.append_row(["0101000000", "Active"])
+    @worksheet.add_table(0, 0, 1, 1, name: "Commodity_watch_list", style: "TableStyleLight15", columns: ["Code", "Status"])
+    @workbook.close
+
+    Zip::File.open(@workbook.filename) do |zip|
+      table_xml = zip.read("xl/tables/table1.xml")
+      table_xml = table_xml.read if table_xml.respond_to?(:read)
+
+      assert_includes(table_xml, 'ref="A1:B2"')
+      assert_includes(table_xml, 'name="Commodity_watch_list"')
+      assert_includes(table_xml, 'displayName="Commodity_watch_list"')
+      assert_includes(table_xml, 'name="Code"')
+      assert_includes(table_xml, 'name="Status"')
+      assert_includes(table_xml, 'name="TableStyleLight15"')
+      assert_includes(table_xml, 'showRowStripes="1"')
+    end
+  end
+
+  it "should coerce table option styles" do
+    assert_equal([0, 0], Libxlsxwriter::TableOptions.style(nil))
+    assert_equal([1, 15], Libxlsxwriter::TableOptions.style("TableStyleLight15"))
+    assert_equal([2, 9], Libxlsxwriter::TableOptions.style("TableStyleMedium9"))
+    assert_equal([3, 2], Libxlsxwriter::TableOptions.style("TableStyleDark2"))
+    assert_equal([0, 0], Libxlsxwriter::TableOptions.style("Unknown"))
+  end
+
+  it "should set multiple column widths" do
+    @worksheet.set_columns_width(0, 2, 18)
+    @worksheet.append_row(["a", "b", "c"])
+    @workbook.close
+
+    Zip::File.open(@workbook.filename) do |zip|
+      sheet_xml = zip.read("xl/worksheets/sheet1.xml")
+      sheet_xml = sheet_xml.read if sheet_xml.respond_to?(:read)
+
+      assert_match(/<col min="1" max="1" width="18\.\d+" customWidth="1"\/>/, sheet_xml)
+      assert_match(/<col min="2" max="2" width="18\.\d+" customWidth="1"\/>/, sheet_xml)
+      assert_match(/<col min="3" max="3" width="18\.\d+" customWidth="1"\/>/, sheet_xml)
+    end
+  end
+
+  it "should enable filters for written rows" do
+    @worksheet.append_row(["Code", "Status"])
+    @worksheet.append_row(["0101000000", "Active"])
+    @worksheet.enable_filters!(end_col: 1)
+    @workbook.close
+
+    Zip::File.open(@workbook.filename) do |zip|
+      sheet_xml = zip.read("xl/worksheets/sheet1.xml")
+      sheet_xml = sheet_xml.read if sheet_xml.respond_to?(:read)
+
+      assert_includes(sheet_xml, '<autoFilter ref="A1:B2"/>')
+    end
+  end
+
+  it "should normalize rich string fragment text" do
+    rich_string = FastExcel::RichString.new([
+      { text: :symbol },
+      { text: 123 }
+    ])
+
+    assert_equal ["symbol", "123"], rich_string.fragments.map { |fragment| fragment[:text] }
   end
 
   it "should set name correctly" do

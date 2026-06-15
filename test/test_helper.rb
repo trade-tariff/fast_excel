@@ -1,7 +1,14 @@
-require "simplecov"
+unless ENV["COVERAGE"] == "false"
+  require "simplecov"
 
-SimpleCov.start do
-  add_filter 'test'
+  SimpleCov.start do
+    track_files "lib/**/*.rb"
+
+    add_filter "test"
+    add_filter "lib/fast_excel/binding"
+
+    minimum_coverage 95 if ENV["COVERAGE_MINIMUM"] == "true"
+  end
 end
 
 require 'bundler/setup'

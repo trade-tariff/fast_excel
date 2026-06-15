@@ -7,6 +7,7 @@ gem 'rake'
 gem 'roo'
 gem 'csv'
 gem 'bigdecimal'
+gem 'rubyzip'
 
 gem 'simplecov', require: false
 gem 'minitest'

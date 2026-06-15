@@ -1,9 +1,44 @@
 name: Test
 
-on: [push, pull_request]
+on:
+  push:
+  pull_request:
 
 jobs:
+  conventional-commits:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Resolve commit range
+        id: commit-range
+        env:
+          BEFORE_SHA: ${{ github.event.before }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            RANGE="$BASE_SHA..$HEAD_SHA"
+          elif [ -n "$BEFORE_SHA" ] && [ "$BEFORE_SHA" != "0000000000000000000000000000000000000000" ]; then
+            RANGE="$BEFORE_SHA..$HEAD_SHA"
+          else
+            RANGE="$HEAD_SHA^..$HEAD_SHA"
+          fi
+
+          echo "range=$RANGE" >> "$GITHUB_OUTPUT"
+      - name: Conventional commit check
+        uses: cocogitto/cocogitto-action@v4
+        with:
+          command: check
+          args: ${{ steps.commit-range.outputs.range }} --ignore-merge-commits
+
   test:
+    needs: conventional-commits
+
     strategy:
       fail-fast: false
       matrix:
@@ -13,7 +48,9 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby }}
@@ -25,8 +62,26 @@ jobs:
 
       - run: rake test
       - run: rake examples
-      - run: gem build fast_excel.gemspec
+      - run: gem build uber_fast_excel.gemspec
 
       - name: Coverage Report by octocov
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.ruby == '3.4' }}
         uses: k1LoW/octocov-action@v1
+
+  performance:
+    needs: test
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.4"
+
+      - run: bundle config set --local without 'benchmarks'
+      - run: bundle install
+      - run: make
+      - run: make install
+      - run: bundle exec rake perf:validate

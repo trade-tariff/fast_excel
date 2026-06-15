@@ -12,7 +12,20 @@ end
 require 'rake/testtask'
 
 Rake::TestTask.new do |test|
+  ENV["COVERAGE_MINIMUM"] = "true"
   test.test_files = Dir.glob('test/**/*_test.rb')
+end
+
+namespace :perf do
+  desc "Validate basic workbook generation performance"
+  task :validate do
+    env = {
+      "COVERAGE" => "false",
+      "PERFORMANCE_TESTS" => "true"
+    }
+    command = ["ruby", "-Itest", "test/performance_test.rb"]
+    abort "Performance validation failed" unless system(env, *command)
+  end
 end
 
 #task :default => :test

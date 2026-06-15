@@ -1,4 +1,6 @@
 .ruby-version
+.bundle/
+vendor/
 .idea/
 try.c
 try.rb
@@ -20,4 +22,5 @@ ext/fast_excel/Makefile
 ext/fast_excel/text_width_ext.bundle
 Gemfile.lock
 lib/libxlsxwriter.dylib
+lib/libxlsxwriter.so
 coverage/

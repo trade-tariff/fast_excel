@@ -1,0 +1,30 @@
+require "benchmark"
+require_relative "test_helper"
+
+describe "FastExcel performance" do
+  it "writes a large constant-memory workbook within the regression budget" do
+    skip "set PERFORMANCE_TESTS=true to run performance validations" unless ENV["PERFORMANCE_TESTS"] == "true"
+
+    rows = Integer(ENV.fetch("PERFORMANCE_ROWS", "20000"))
+    max_seconds = Float(ENV.fetch("PERFORMANCE_MAX_SECONDS", "10"))
+
+    elapsed = Benchmark.realtime do
+      workbook = FastExcel.open(constant_memory: true)
+      worksheet = workbook.add_worksheet("Performance")
+      worksheet.append_row(["code", "status", "value"])
+
+      rows.times do |index|
+        worksheet.append_row([
+          format("%010d", index),
+          index.even? ? "Active" : "Suspended",
+          index
+        ])
+      end
+
+      content = workbook.read_string
+      assert_operator content.bytesize, :>, 1000
+    end
+
+    assert_operator elapsed, :<, max_seconds, "expected #{rows} rows in under #{max_seconds}s, got #{elapsed.round(3)}s"
+  end
+end

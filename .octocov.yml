@@ -5,6 +5,8 @@ codeToTestRatio:
   code:
     - '**/*.rb'
     - '!test/**/*.rb'
+    - '!lib/fast_excel/binding/**/*.rb'
+    - '!lib/fast_excel/binding.rb'
   test:
     - 'test/**/*_test.rb'
 testExecutionTime:
