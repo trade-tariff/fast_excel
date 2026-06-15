@@ -42,9 +42,9 @@ all :
 	@echo "Compiling libxlsxwriter ..."
 ifdef USE_CMAKE
 	@echo "run cmake libxlsxwriter ..."
-	cmake libxlsxwriter
+	cmake -DUSE_DTOA_LIBRARY=ON libxlsxwriter
 else
-	$(Q)$(MAKE) -C libxlsxwriter
+	$(Q)$(MAKE) -C libxlsxwriter USE_DTOA_LIBRARY=1
 endif
 
 clean :
