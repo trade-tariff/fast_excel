@@ -27,6 +27,10 @@ module FastExcel
       end
     end
 
+    def compile_row_writer(types:, formats: nil)
+      WorksheetRowWriter.new(self, types: types, formats: formats)
+    end
+
     def auto_width?
       defined?(@auto_width) && @auto_width
     end
@@ -42,12 +46,15 @@ module FastExcel
 
     def write_value(row_number, cell_number, value, format = nil)
 
-      if workbook.constant_memory? && row_number < @last_row_number
-        raise ArgumentError, "Can not write to saved row in constant_memory mode (attempted row: #{row_number}, last saved row: #{last_row_number})"
-      end
+      validate_writable_row!(row_number)
 
       value_writer.write(row_number, cell_number, value, format)
 
+      track_written_row(row_number)
+    end
+
+    def track_written_row(row_number)
+      validate_writable_row!(row_number)
       @last_row_number = row_number > @last_row_number ? row_number : @last_row_number
     end
 
@@ -111,6 +118,13 @@ module FastExcel
       @value_writer ||= WorksheetValueWriter.new(self)
     end
     private :value_writer
+
+    def validate_writable_row!(row_number)
+      return unless workbook.constant_memory? && row_number < @last_row_number
+
+      raise ArgumentError, "Can not write to saved row in constant_memory mode (attempted row: #{row_number}, last saved row: #{last_row_number})"
+    end
+    private :validate_writable_row!
 
     def set_column(start_col, end_col, width = nil, format = nil)
       super(start_col, end_col, width || DEF_COL_WIDTH, format)

@@ -33,7 +33,8 @@ module FastExcel
             write_value: measure { |worksheet| write_with_values(worksheet) },
             write_row: measure { |worksheet| write_with_rows(worksheet) },
             append_row: measure { |worksheet| write_with_append_rows(worksheet) },
-            append_rows: measure { |worksheet| worksheet.append_rows(data) }
+            append_rows: measure { |worksheet| worksheet.append_rows(data) },
+            compiled_row_writer: measure { |worksheet| write_with_compiled_row_writer(worksheet) }
           },
           platform: platform_metadata
         )
@@ -77,6 +78,11 @@ module FastExcel
         data.each do |row|
           worksheet.append_row(row)
         end
+      end
+
+      def write_with_compiled_row_writer(worksheet)
+        row_writer = worksheet.compile_row_writer(types: [:string, :string, :number, :time, :url])
+        row_writer.append_rows(data)
       end
 
       def build_data
