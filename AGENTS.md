@@ -115,6 +115,10 @@ Ruby API and `FastExcel` namespace, while publishing under the
 
 - The maintained repository is `willfish/fast_excel`; the original abandoned
   upstream is `Paxa/fast_excel`.
+- GitHub teams can only be granted access to repositories in the same
+  organization. The `trade-tariff/trade-tariff-core` team cannot be attached to
+  `willfish/fast_excel` while the repository is owned by the personal `willfish`
+  account.
 - Do not comment on upstream issues or PRs unless the user explicitly asks.
 - When reviewing upstream open PRs, classify them as:
   - already incorporated,
@@ -126,7 +130,8 @@ Ruby API and `FastExcel` namespace, while publishing under the
 
 ## Attribution
 
-- `CONTRIBUTORS.md` records maintainer and contributor acknowledgement.
-- The Trade Tariff Core group should remain acknowledged there.
-- Preserve credit for upstream contributors when their work informs this fork,
-  even when the final implementation is adapted rather than copied.
+- Preserve credit for upstream contributors with commit trailers and changelog
+  notes when their work informs this fork, even when the final implementation is
+  adapted rather than copied.
+- Do not add a standalone contributors markdown file for access control.
+  Repository access belongs in GitHub repository/team settings.
