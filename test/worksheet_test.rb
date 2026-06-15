@@ -58,6 +58,37 @@ describe "FastExcel::WorksheetExt append_row" do
     assert_equal([["header"], ["aaa"], ["bbb"]], get_arrays(@workbook))
   end
 
+  it "should write rows with a compiled schema writer" do
+    row_writer = @worksheet.compile_row_writer(types: [:string, :number, :time, :url])
+    time = Time.utc(2026, 6, 15, 10, 20, 30)
+
+    row_writer.append_row([
+      "0101000000",
+      12.5,
+      time,
+      FastExcel::URL.new("https://www.trade-tariff.service.gov.uk/commodities/0101000000")
+    ])
+
+    assert_equal(0, @worksheet.last_row_number)
+    row = get_arrays(@workbook).first
+    assert_equal("0101000000", row[0])
+    assert_equal(12.5, row[1])
+    assert_in_delta(FastExcel.date_num(time), row[2], 0.00001)
+    assert_equal("https://www.trade-tariff.service.gov.uk/commodities/0101000000", row[3])
+  end
+
+  it "should write multiple rows with a compiled schema writer" do
+    row_writer = @worksheet.compile_row_writer(types: [:string, :number])
+
+    row_writer.append_rows([
+      ["aaa", 1],
+      ["bbb", 2]
+    ])
+
+    assert_equal(1, @worksheet.last_row_number)
+    assert_equal([["aaa", 1], ["bbb", 2]], get_arrays(@workbook))
+  end
+
   it "should not allow batched writes to saved rows in constant_memory mode" do
     @workbook = FastExcel.open(constant_memory: true)
     @worksheet = @workbook.add_worksheet
@@ -66,6 +97,20 @@ describe "FastExcel::WorksheetExt append_row" do
 
     error = assert_raises(ArgumentError) do
       @worksheet.write_rows(0, [["ccc"]])
+    end
+
+    assert_equal("Can not write to saved row in constant_memory mode (attempted row: 0, last saved row: 1)", error.message)
+  end
+
+  it "should not allow compiled schema writes to saved rows in constant_memory mode" do
+    @workbook = FastExcel.open(constant_memory: true)
+    @worksheet = @workbook.add_worksheet
+    row_writer = @worksheet.compile_row_writer(types: [:string])
+
+    row_writer.append_rows([["aaa"], ["bbb"]])
+
+    error = assert_raises(ArgumentError) do
+      row_writer.write_row(0, ["ccc"])
     end
 
     assert_equal("Can not write to saved row in constant_memory mode (attempted row: 0, last saved row: 1)", error.message)

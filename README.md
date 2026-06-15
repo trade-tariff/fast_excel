@@ -119,6 +119,18 @@ worksheet.append_row(["bottom", 456])
 worksheet << ["shortcut", 789]
 ```
 
+For hot report loops with the same column types on every row, compile a schema
+writer once and reuse it. This avoids the generic per-cell type dispatch in
+`write_value` while preserving the existing value-specific write methods:
+
+```ruby
+row_writer = worksheet.compile_row_writer(types: [:string, :number, :time, :url])
+
+rows.each do |row|
+  row_writer.append_row(row)
+end
+```
+
 ### Dates
 
 Excel stores dates as day numbers. `FastExcel.date_num` exposes the conversion
