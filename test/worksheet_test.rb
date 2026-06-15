@@ -35,6 +35,42 @@ describe "FastExcel::WorksheetExt append_row" do
     assert_equal([["aaa", "bbb"]], get_arrays(@workbook))
   end
 
+  it "should write multiple rows from an explicit start row" do
+    @worksheet.write_rows(2, [["aaa", "bbb"], ["ccc", "ddd"]])
+
+    assert_equal(3, @worksheet.last_row_number)
+    assert_equal(
+      [
+        [nil, nil],
+        [nil, nil],
+        ["aaa", "bbb"],
+        ["ccc", "ddd"]
+      ],
+      get_arrays(@workbook)
+    )
+  end
+
+  it "should append multiple rows and update last_row_number" do
+    @worksheet.append_row(["header"])
+    @worksheet.append_rows([["aaa"], ["bbb"]])
+
+    assert_equal(2, @worksheet.last_row_number)
+    assert_equal([["header"], ["aaa"], ["bbb"]], get_arrays(@workbook))
+  end
+
+  it "should not allow batched writes to saved rows in constant_memory mode" do
+    @workbook = FastExcel.open(constant_memory: true)
+    @worksheet = @workbook.add_worksheet
+
+    @worksheet.append_rows([["aaa"], ["bbb"]])
+
+    error = assert_raises(ArgumentError) do
+      @worksheet.write_rows(0, [["ccc"]])
+    end
+
+    assert_equal("Can not write to saved row in constant_memory mode (attempted row: 0, last saved row: 1)", error.message)
+  end
+
   it "should write_row then append and update last_row_number" do
     @worksheet.write_row(3, ["aaa", "bbb", "ccc"])
     @worksheet.append_row(["ddd", "eee", "fff"])
