@@ -69,7 +69,7 @@ jobs:
 
       - name: Coverage Report by octocov
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.ruby == '3.4' }}
-        uses: k1LoW/octocov-action@v1.5.1
+        uses: k1LoW/octocov-action@v1.5.2
 
   performance:
     needs: test
