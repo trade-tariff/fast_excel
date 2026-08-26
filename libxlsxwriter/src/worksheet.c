@@ -8264,14 +8264,12 @@ worksheet_write_url_opt(lxw_worksheet *self,
         GOTO_LABEL_ON_MEM_ERROR(string_copy, mem_error);
     }
 
-    if (url) {
-        if (link_type == HYPERLINK_URL)
-            url_copy = lxw_strdup(url);
-        else
-            url_copy = lxw_strdup(url + sizeof("__ternal"));
+    if (link_type == HYPERLINK_URL)
+        url_copy = lxw_strdup(url);
+    else
+        url_copy = lxw_strdup(url + sizeof("__ternal"));
 
-        GOTO_LABEL_ON_MEM_ERROR(url_copy, mem_error);
-    }
+    GOTO_LABEL_ON_MEM_ERROR(url_copy, mem_error);
 
     if (tooltip) {
         tooltip_copy = lxw_strdup(tooltip);
