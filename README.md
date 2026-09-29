@@ -321,8 +321,17 @@ Before the first release, create a pending trusted publisher in RubyGems:
 - Repository: `willfish/fast_excel`
 - Workflow: `.github/workflows/release.yml`
 
-## License
+## Contribute
 
-MIT. This repository includes sources from
-[libxlsxwriter](https://github.com/jmcnamara/libxlsxwriter), which is also
-MIT-licensed.
+Read [CONTRIBUTING.md](CONTRIBUTING.md) for the fork workflow, checks and private
+security reporting. The default branch is `master`. Preserve compatibility with
+`require "fast_excel"` and the `FastExcel` namespace when changing the maintained
+`uber_fast_excel` gem.
+
+## Licence
+
+The gem uses the [MIT licence](LICENSE), including Pavel Evstigneev's copyright
+notice. Preserve the original attribution when reusing or porting code.
+This repository also includes
+[libxlsxwriter](https://github.com/jmcnamara/libxlsxwriter), which retains its own
+MIT licence and copyright notices.
