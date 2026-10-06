@@ -4,6 +4,23 @@ This repository is the maintained `uber_fast_excel` gem. It keeps the upstream
 Ruby API and `FastExcel` namespace, while publishing under the
 `uber_fast_excel` gem name.
 
+## Commits MUST Follow Conventional Commits
+
+Every commit in this repository MUST follow
+[Conventional Commits](https://www.conventionalcommits.org/). CI runs
+Cocogitto against every commit in the pushed or pull request range, so one
+non-conforming commit fails the build. Write the subject as
+`<type>(<optional scope>): <short imperative description>`.
+
+- Allowed types: `feat`, `fix`, `chore`, `docs`, `test`, `refactor`, `perf`,
+  `build`, `ci`, `style`, `revert`.
+- Write the description in the imperative, in lower case, without a trailing
+  full stop.
+- Put issue or ticket references in the body or footer, never in the subject.
+- Mark breaking changes with `!` before the colon or with a
+  `BREAKING CHANGE:` footer.
+- Do not squash a range of commits into a subject that breaks the pattern.
+
 ## Repository Shape
 
 - Source compatibility matters: keep `require "fast_excel"` and the
