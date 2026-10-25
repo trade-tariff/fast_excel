@@ -11,6 +11,7 @@
 
   outputs =
     {
+      self,
       nixpkgs,
       flake-utils,
       nixpkgs-ruby,
@@ -31,8 +32,61 @@
           "--with-zlib-include=${zlib.dev}/include"
           "--with-zlib-lib=${zlib.out}/lib"
         ];
+        reviewEnvironment = ''
+          if [ "''${REVIEW_SANDBOX:-}" != 1 ] || [ "$PWD" != /workspace ]; then
+            echo 'Run review commands inside a disposable review sandbox.' >&2
+            exit 64
+          fi
+          export TMPDIR=/workspace/.review/tmp GEM_HOME=/workspace/.review/gems
+          export GEM_PATH="$GEM_HOME''${REVIEW_GEM_CACHE:+:$REVIEW_GEM_CACHE}"
+          export BUNDLE_IGNORE_CONFIG=1 BUNDLE_PATH__SYSTEM=true BUNDLE_WITHOUT=benchmarks
+          export BUNDLE_LOCAL__CAXLSX=/deps/caxlsx BUNDLE_LOCAL__PROCESS_MEMORY=/deps/process_memory
+          export BUNDLE_DISABLE_LOCAL_BRANCH_CHECK=true
+          unset BUNDLE_PATH BUNDLE_APP_CONFIG
+          mkdir -p "$TMPDIR" "$GEM_HOME"
+        '';
       in
       {
+        devShells.review = self.devShells.${system}.default.overrideAttrs (old: {
+          shellHook = "";
+          buildInputs = (old.buildInputs or [ ]) ++ [ pkgs.libffi ];
+          nativeBuildInputs = [
+            pkgs.nixfmt
+            (pkgs.writeShellApplication {
+              name = "review-bootstrap";
+              text = reviewEnvironment + ''
+                if [ -d /deps/gem-archives ]; then
+                  for archive in /deps/gem-archives/*.gem; do
+                    [ -f "$archive" ] || continue
+                    gem install --local --no-document --ignore-dependencies "$archive"
+                  done
+                fi
+                bundle check || bundle install --local
+                make
+                make install
+              '';
+            })
+            (pkgs.writeShellApplication {
+              name = "review-check";
+              text = reviewEnvironment + ''
+                nixfmt --check flake.nix
+                PERFORMANCE_TESTS=true bundle exec rake test 2>&1 | tee "$TMPDIR/unit.log"
+                ruby -e 'abort "Skipped unit tests" if File.read(ARGV[0]).match?(/[1-9][0-9]* (?:skips|pendings|omissions)/)' "$TMPDIR/unit.log"
+                bundle exec rake examples
+                bundle exec rake perf:validate
+                gem build uber_fast_excel.gemspec
+              '';
+            })
+          ]
+          ++ (old.nativeBuildInputs or [ ]);
+          CPATH = "${pkgs.zlib.dev}/include";
+          LIBRARY_PATH = "${pkgs.zlib.out}/lib";
+          LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath [ pkgs.libyaml ];
+          BUNDLE_BUILD__ZLIB = builtins.concatStringsSep " " zlibBuildFlags;
+          TZDIR = "${pkgs.tzdata.outPath}/share/zoneinfo";
+          SSL_CERT_FILE = "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt";
+        });
+
         devShells.default = pkgs.mkShell {
           shellHook = ''
             export CPATH="${pkgs.zlib.dev}/include:''${CPATH:-}"
