@@ -75,8 +75,8 @@
                 bundle exec rake examples
                 bundle exec rake perf:validate
                 git check-ignore -v "$GEM_HOME" | grep -q '^\.gitignore:'
-                gem build uber_fast_excel.gemspec
-                ruby -rrubygems/package -e 's = Gem::Package.new(Dir["uber_fast_excel-*.gem"].fetch(0)).spec; abort "Review inputs leaked into gem" if s.files.any? { |p| p.start_with?(".bundle/", ".review/") }'
+                gem build uber_fast_excel.gemspec --output "$TMPDIR/uber_fast_excel.gem"
+                ruby -rrubygems/package -e 's = Gem::Package.new(ARGV.fetch(0)).spec; abort "Review inputs leaked into gem" if s.files.any? { |p| p.start_with?(".bundle/", ".review/") }' "$TMPDIR/uber_fast_excel.gem"
               '';
             })
           ]
