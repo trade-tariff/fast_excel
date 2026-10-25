@@ -37,7 +37,7 @@
             echo 'Run review commands inside a disposable review sandbox.' >&2
             exit 64
           fi
-          export TMPDIR=/workspace/.review/tmp GEM_HOME=/workspace/.review/gems
+          export TMPDIR=/workspace/.bundle/review/tmp GEM_HOME=/workspace/.bundle/review/gems
           export GEM_PATH="$GEM_HOME''${REVIEW_GEM_CACHE:+:$REVIEW_GEM_CACHE}"
           export BUNDLE_IGNORE_CONFIG=1 BUNDLE_PATH__SYSTEM=true BUNDLE_WITHOUT=benchmarks
           export BUNDLE_LOCAL__CAXLSX=/deps/caxlsx BUNDLE_LOCAL__PROCESS_MEMORY=/deps/process_memory
@@ -74,7 +74,9 @@
                 ruby -e 'abort "Skipped unit tests" if File.read(ARGV[0]).match?(/[1-9][0-9]* (?:skips|pendings|omissions)/)' "$TMPDIR/unit.log"
                 bundle exec rake examples
                 bundle exec rake perf:validate
+                git check-ignore -v "$GEM_HOME" | grep -q '^\.gitignore:'
                 gem build uber_fast_excel.gemspec
+                ruby -rrubygems/package -e 's = Gem::Package.new(Dir["uber_fast_excel-*.gem"].fetch(0)).spec; abort "Review inputs leaked into gem" if s.files.any? { |p| p.start_with?(".bundle/", ".review/") }'
               '';
             })
           ]
